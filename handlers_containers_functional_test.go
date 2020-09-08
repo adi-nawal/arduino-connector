@@ -23,20 +23,6 @@ import (
 	"golang.org/x/net/context"
 )
 
-// NewMqttTestClientLocal creates mqtt client in localhost:1883
-func NewMqttTestClientLocal() *MqttTestClient {
-	uiOptions := mqtt.NewClientOptions().AddBroker("tcp://localhost:1883").SetClientID("UI")
-	ui := mqtt.NewClient(uiOptions)
-	if token := ui.Connect(); token.Wait() && token.Error() != nil {
-		panic(token.Error())
-	}
-
-	return &MqttTestClient{
-		ui,
-		"",
-	}
-}
-
 type testStatus struct {
 	appStatus *Status
 	ui        *MqttTestClient
@@ -49,7 +35,7 @@ func TestMain(m *testing.M) {
 }
 
 func setupAndRun(m *testing.M) int {
-	ts.ui = NewMqttTestClientLocal()
+	ts.ui = newMqttTestClientLocal()
 	defer ts.ui.Close()
 
 	ts.appStatus = NewStatus(program{}.Config, nil, nil, "")
