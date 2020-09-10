@@ -7,7 +7,7 @@ import (
 )
 
 func TestInstallDockerPath(t *testing.T) {
-	str, err := createDockerConfig()
-	assert.True(t, str == "installed")
+	value, err := isDockerInstalled()
+	assert.True(t, value)
 	assert.True(t, err == nil)
 }
