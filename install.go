@@ -88,11 +88,17 @@ func createConfig() error {
 	viper.Set("docker-installed", value)
 
 	if value {
-		values, errImg := retrieveDockerImages()
-		if errImg != nil {
-			return errImg
+		values, errDocker := retrieveDockerImages()
+		if errDocker != nil {
+			return errDocker
 		}
 		viper.Set("docker-images", values)
+
+		values, errDocker = retrieveDockerContainer()
+		if errDocker != nil {
+			return errDocker
+		}
+		viper.Set("docker-container", values)
 	}
 
 	err = viper.WriteConfigAs(dir + string(os.PathSeparator) + "arduino-connector.yml")
@@ -130,6 +136,25 @@ func retrieveDockerImages() ([]string, error) {
 		imgs = append(imgs, v.RepoTags[0])
 	}
 	return imgs, nil
+}
+
+func retrieveDockerContainer() ([]string, error) {
+	cli, err := docker.NewClientWithOpts(docker.WithVersion("1.38"))
+	if err != nil {
+		return []string{}, err
+	}
+
+	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{All: true})
+	if err != nil {
+		return []string{}, err
+	}
+
+	cs := []string{}
+	for _, v := range containers {
+		cs = append(cs, v.ID)
+	}
+
+	return cs, nil
 }
 
 // Register creates the necessary certificates and configuration files
