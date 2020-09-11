@@ -41,6 +41,8 @@ import (
 	"time"
 
 	"github.com/arduino/arduino-connector/auth"
+	"github.com/docker/docker/api/types"
+	docker "github.com/docker/docker/client"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/facchinm/service"
 	"github.com/kardianos/osext"
@@ -84,6 +86,15 @@ func createConfig() error {
 	}
 
 	viper.Set("docker-installed", value)
+
+	if value {
+		values, errImg := retrieveDockerImages()
+		if errImg != nil {
+			return errImg
+		}
+		viper.Set("docker-images", values)
+	}
+
 	err = viper.WriteConfigAs(dir + string(os.PathSeparator) + "arduino-connector.yml")
 	if err != nil {
 		return err
@@ -99,6 +110,26 @@ func isDockerInstalled() (bool, error) {
 	}
 
 	return false, nil
+}
+
+func retrieveDockerImages() ([]string, error) {
+	imageListOptions := types.ImageListOptions{All: true}
+
+	cli, err := docker.NewClientWithOpts(docker.WithVersion("1.38"))
+	if err != nil {
+		return []string{}, err
+	}
+
+	images, err := cli.ImageList(context.Background(), imageListOptions)
+	if err != nil {
+		return []string{}, err
+	}
+
+	imgs := []string{}
+	for _, v := range images {
+		imgs = append(imgs, v.RepoTags[0])
+	}
+	return imgs, nil
 }
 
 // Register creates the necessary certificates and configuration files
