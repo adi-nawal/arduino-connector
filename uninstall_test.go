@@ -39,7 +39,8 @@ func TestUninstallSketches(t *testing.T) {
 		t.Error(errFile)
 	}
 
-	file.WriteString("test")
+	_, err = file.WriteString("test")
+	assert.True(t, err == nil)
 	file.Close()
 
 	_, err = os.Stat(folder + "/fakeSketch")
@@ -79,12 +80,14 @@ func TestUninstallCerts(t *testing.T) {
 		t.Error(errFile2)
 	}
 
-	file1.WriteString("test")
-	file2.WriteString("test")
+	_, err := file1.WriteString("test")
+	assert.True(t, err == nil)
+	_, err = file2.WriteString("test")
+	assert.True(t, err == nil)
 	file1.Close()
 	file2.Close()
 
-	_, err := os.Stat(s.config.CertPath + "/certificate.pem")
+	_, err = os.Stat(s.config.CertPath + "/certificate.pem")
 	assert.True(t, err == nil)
 	_, err = os.Stat(s.config.CertPath + "/certificate.key")
 	assert.True(t, err == nil)

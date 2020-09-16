@@ -171,7 +171,7 @@ func main() {
 	}
 
 	if *doInstall {
-		if err := install(s); err != nil {
+		if err = install(s); err != nil {
 			panic(err)
 		}
 
