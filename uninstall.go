@@ -114,7 +114,7 @@ func removeContainers(s *Status) error {
 	}
 
 	for _, v := range containers {
-		err = s.dockerClient.ContainerRemove(context.Background(), v, types.ContainerRemoveOptions{})
+		err = s.dockerClient.ContainerRemove(context.Background(), v, types.ContainerRemoveOptions{Force: true})
 		time.Sleep(5 * time.Second)
 		if err != nil {
 			return err
