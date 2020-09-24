@@ -157,6 +157,8 @@ func retrieveDockerContainer() ([]string, error) {
 		cs = append(cs, v.ID)
 	}
 
+	fmt.Println("containers when create config: ", cs)
+
 	return cs, nil
 }
 
