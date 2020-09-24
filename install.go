@@ -41,8 +41,6 @@ import (
 	"time"
 
 	"github.com/arduino/arduino-connector/auth"
-	"github.com/docker/docker/api/types"
-	docker "github.com/docker/docker/client"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/facchinm/service"
 	"github.com/kardianos/osext"
@@ -86,23 +84,9 @@ func createConfig() error {
 	}
 
 	viper.Set("docker-installed", value)
-
-	if value {
-		values, errDocker := retrieveDockerImages()
-		if errDocker != nil {
-			return errDocker
-		}
-		viper.Set("docker-images", values)
-
-		values, errDocker = retrieveDockerContainer()
-		if errDocker != nil {
-			return errDocker
-		}
-		viper.Set("docker-container", values)
-	}
-
-	value = isNetManagerInstalled()
-	viper.Set("network-manager-installed", value)
+	viper.Set("docker-images", []string{})
+	viper.Set("docker-container", []string{})
+	viper.Set("network-manager-installed", isNetManagerInstalled())
 
 	err = viper.WriteConfigAs(dir + string(os.PathSeparator) + "arduino-connector.yml")
 	if err != nil {
@@ -121,51 +105,22 @@ func isDockerInstalled() (bool, error) {
 	return false, nil
 }
 
-func retrieveDockerImages() ([]string, error) {
-	imageListOptions := types.ImageListOptions{All: true}
-
-	cli, err := docker.NewClientWithOpts(docker.WithVersion("1.38"))
-	if err != nil {
-		return []string{}, err
-	}
-
-	images, err := cli.ImageList(context.Background(), imageListOptions)
-	if err != nil {
-		return []string{}, err
-	}
-
-	imgs := []string{}
-	for _, v := range images {
-		imgs = append(imgs, v.RepoTags[0])
-	}
-	return imgs, nil
-}
-
-func retrieveDockerContainer() ([]string, error) {
-	cli, err := docker.NewClientWithOpts(docker.WithVersion("1.38"))
-	if err != nil {
-		return []string{}, err
-	}
-
-	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{All: true})
-	if err != nil {
-		return []string{}, err
-	}
-
-	cs := []string{}
-	for _, v := range containers {
-		cs = append(cs, v.ID)
-	}
-
-	fmt.Println("containers when create config: ", cs)
-
-	return cs, nil
-}
-
 func isNetManagerInstalled() bool {
 	cmd := exec.Command("dpkg-query", "-l network-manager; echo $?")
 	_, err := cmd.CombinedOutput()
 	return err == nil
+}
+
+func updateConfigWithContainer(c string) {
+	cs := viper.GetStringSlice("docker-container")
+	cs = append(cs, c)
+	viper.Set("docker-container", cs)
+}
+
+func updateConfigWithImage(i string) {
+	is := viper.GetStringSlice("docker-images")
+	is = append(is, i)
+	viper.Set("docker-images", is)
 }
 
 // Register creates the necessary certificates and configuration files
