@@ -154,8 +154,8 @@ func removeNetworkManager() error {
 	}
 
 	viper.SetConfigFile(dir + string(os.PathSeparator) + "arduino-connector.yml")
-	net := viper.GetBool("network-manager")
-	if net {
+	net := viper.GetBool("network-manager-installed")
+	if !net {
 		toRemove := append([]*apt.Package{}, &apt.Package{Name: "network-manager"})
 		_, err = apt.Remove(toRemove...)
 		if err != nil {

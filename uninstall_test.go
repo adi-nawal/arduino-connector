@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"os/exec"
 	"testing"
 	"time"
 
@@ -265,4 +266,36 @@ func TestUninstallAllImages(t *testing.T) {
 
 	resp := dashboard.MqttSendAndReceiveTimeout(t, "/status/uninstall", "{}", 5*time.Minute)
 	assert.True(t, resp == "INFO: OK\n")
+}
+
+func TestUninstallNetworkManager(t *testing.T) {
+	dashboard := newMqttTestClientLocal()
+	defer dashboard.Close()
+
+	s := NewStatus(Config{}, nil, nil, "")
+	s.mqttClient = mqtt.NewClient(mqtt.NewClientOptions().AddBroker("tcp://localhost:1883").SetClientID("arduino-connector"))
+	if token := s.mqttClient.Connect(); token.Wait() && token.Error() != nil {
+		log.Fatal(token.Error())
+	}
+	defer s.mqttClient.Disconnect(100)
+
+	subscribeTopic(s.mqttClient, "0", "/status/uninstall/post", s, s.Uninstall, false)
+
+	c := exec.Command("bash", "-c", "apt-get install -y network-manager")
+	_, err := c.CombinedOutput()
+	assert.True(t, err == nil)
+
+	defer func() {
+		c := exec.Command("bash", "-c", "apt-get remove -y network-manager")
+		_, err := c.CombinedOutput()
+		assert.True(t, err == nil)
+	}()
+
+	err = createConfig()
+	assert.True(t, err == nil)
+
+	resp := dashboard.MqttSendAndReceiveTimeout(t, "/status/uninstall", "{}", 5*time.Minute)
+	assert.True(t, resp == "INFO: OK\n")
+
+	assert.True(t, isNetManagerInstalled())
 }

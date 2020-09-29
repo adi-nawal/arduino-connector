@@ -108,7 +108,7 @@ func isDockerInstalled() (bool, error) {
 func isNetManagerInstalled() bool {
 	cmd := exec.Command("dpkg-query", "-l network-manager; echo $?")
 	_, err := cmd.CombinedOutput()
-	return err == nil
+	return err != nil
 }
 
 func updateConfigWithContainer(c string) {
